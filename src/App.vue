@@ -1,19 +1,19 @@
 <template>
-  <HelloWorld v-model="items" />
+  <!-- <HelloWorld v-model="items" /> -->
   <!-- <DivDraggableVue /> -->
   <!-- <DrawLineVue /> -->
-  <ImageMarker v-model="init" />
+  <ImageMarker v-model="init" :img-src="imgSrc" />
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+// import HelloWorld from './components/HelloWorld.vue'
 // import DivDraggableVue from './components/DivDraggable.vue'
 // import DrawLineVue from './components/DrawLine.vue'
 import ImageMarker from './components/Image-Marker.vue'
 export default {
   name: 'App',
   components: {
-    HelloWorld,
+    // HelloWorld,
     // DivDraggableVue,
     // DrawLineVue,
     ImageMarker,
@@ -21,30 +21,28 @@ export default {
   data() {
     return {
       items: 'Hi',
+      imgSrc:
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Universal_Numbering_System.svg/1200px-Universal_Numbering_System.svg.png',
       init: [
         {
-          className: 'yellow',
           col: 2,
           content: '14',
           no: 2,
           pos: { x: 320, y: 145 },
         },
         {
-          className: 'yellow',
           col: 2,
           content: '9',
           no: 4,
           pos: { x: 234, y: 41 },
         },
         {
-          className: 'green',
           col: 1,
           content: '31',
           no: 3,
           pos: { x: 101, y: 305 },
         },
         {
-          className: 'green',
           col: 1,
           content: '1',
           no: 1,
@@ -55,15 +53,6 @@ export default {
         },
       ],
     }
-  },
-  watch: {
-    init: {
-      handler(val) {
-        console.log('parent', val)
-      },
-      immediate: true,
-      deep: true,
-    },
   },
 }
 </script>

@@ -101,12 +101,14 @@
           <template v-for="(it, index) of list" :key="index">
             <div
               :ref="`line${it.no}`"
-              :class="`image-marker__line ${it.className}`"
+              :class="`image-marker__line ${it.col == 1 ? 'green' : 'yellow'}`"
             ></div>
             <div
               :id="`dotMove${it.no}`"
               :ref="`dot${it.no}`"
-              :class="`image-marker__dot ${it.className} ui-draggable ui-draggable-handle`"
+              :class="`image-marker__dot ${
+                it.col == 1 ? 'green' : 'yellow'
+              } ui-draggable ui-draggable-handle`"
               @mousedown="(e) => dragMouseDown(e, it)"
             ></div>
           </template>
@@ -126,12 +128,10 @@ export default {
     prop: 'modelValue',
     event: 'mousedown',
   },
-  props: ['modelValue'],
+  props: ['modelValue', 'imgSrc'],
 
   data() {
     return {
-      imgSrc:
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Universal_Numbering_System.svg/1200px-Universal_Numbering_System.svg.png',
       list: [],
     }
   },
@@ -139,6 +139,7 @@ export default {
   watch: {
     modelValue: {
       handler(details) {
+        this.list = []
         if (details?.length) this.list = details
       },
       immediate: true,
@@ -162,20 +163,14 @@ export default {
       deep: true,
     },
   },
-  mounted() {
-    // if (window?.localStorage?.markers) {
-    //   const data = JSON.parse(window?.localStorage?.markers)
-    //   if (data?.length) this.list = data
-    // }
-  },
+
   methods: {
     // Method
     addPosMarker() {
       const no = this.maxNo()
       const marker = {
         no,
-        content: 'Content Positive',
-        className: 'green',
+        content: 'Comment',
         col: 1,
       }
       this.list.push(marker)
@@ -184,8 +179,7 @@ export default {
       const no = this.maxNo()
       const marker = {
         no,
-        content: 'Content Negative',
-        className: 'yellow',
+        content: 'Comment',
         col: 2,
       }
       this.list.push(marker)
@@ -218,14 +212,13 @@ export default {
     },
 
     elementDrag(e, marker) {
-      if (e) {
-        let dot = this.$refs[`dot${marker.no}`][0]
+      let dot = this.$refs[`dot${marker.no}`][0]
 
-        marker.pos = {
-          x: dot.offsetLeft + e.movementX,
-          y: dot.offsetTop + e.movementY,
-        }
+      marker.pos = {
+        x: dot.offsetLeft + e.movementX,
+        y: dot.offsetTop + e.movementY,
       }
+
       //
       this.addMarker(marker)
     },
