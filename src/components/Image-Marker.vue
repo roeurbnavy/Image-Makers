@@ -6,14 +6,14 @@
           <div
             class="toolbar_btn btn_grey"
             id="add_pos_marker"
-            @click="addPosMarker"
+            @click="addLeftMarker"
           >
             Add Positive dot
           </div>
           <div
             class="toolbar_btn btn_grey"
             id="add_neg_marker"
-            @click="addNegMarker"
+            @click="addRightMarker"
           >
             Add Negative dot
           </div>
@@ -21,8 +21,6 @@
       </div>
     </div>
     <!-- Body -->
-    <!-- <div id="element"> -->
-
     <div class="image-marker-container">
       <!-- Left -->
       <div
@@ -48,7 +46,7 @@
 
               <div
                 class="image-marker__text-box__close-btn"
-                @click="remove(pos)"
+                @click="removeComment(pos)"
               >
                 X
               </div>
@@ -80,7 +78,7 @@
               </p>
               <div
                 class="image-marker__text-box__close-btn"
-                @click="remove(neg)"
+                @click="removeComment(neg)"
               >
                 X
               </div>
@@ -92,7 +90,7 @@
       <!-- Image -->
       <div
         class="image-marker-container__box image-marker-container__box--image"
-        ref="dragBox"
+        ref="dragArea"
       >
         <img class="image-marker-container__img" :src="imgSrc" />
         <div
@@ -115,7 +113,6 @@
         </div>
       </div>
     </div>
-    <!-- </div> -->
   </div>
 </template>
 
@@ -149,7 +146,7 @@ export default {
         this.$nextTick(() => {
           if (details?.length) {
             for (let it of details) {
-              this.addMarker(it)
+              this.addCommentMarker(it)
             }
           }
           this.$nextTick(() => {
@@ -166,7 +163,7 @@ export default {
 
   methods: {
     // Method
-    addPosMarker() {
+    addLeftMarker() {
       const no = this.maxNo()
       const marker = {
         no,
@@ -175,7 +172,7 @@ export default {
       }
       this.list.push(marker)
     },
-    addNegMarker() {
+    addRightMarker() {
       const no = this.maxNo()
       const marker = {
         no,
@@ -193,7 +190,7 @@ export default {
 
       return res + 1
     },
-    remove(marker) {
+    removeComment(marker) {
       const no = marker.no
       const index = this.list.findIndex((it) => it.no == no)
 
@@ -202,27 +199,50 @@ export default {
     onInput(e, marker) {
       marker.content = e.target.innerText
     },
+
     dragMouseDown(e, marker) {
+      let dragoffset = { x: 0, y: 0 }
+      const parent = this.$refs['dragArea']
       // event
       e.preventDefault()
+      let el = this.$refs[`dot${marker.no}`][0]
+
+      let pageX =
+        e.pageX ||
+        e.clientX +
+          (document.documentElement.scrollLeft
+            ? document.documentElement.scrollLeft
+            : parent.scrollLeft)
+      let pageY =
+        e.pageY ||
+        e.clientY +
+          (document.documentElement.scrollTop
+            ? document.documentElement.scrollTop
+            : parent.scrollTop)
+      dragoffset.x = pageX - el.offsetLeft
+      dragoffset.y = pageY - el.offsetTop
 
       // get the mouse cursor position at startup:
-      document.onmousemove = (e) => this.elementDrag(e, marker)
+      document.onmousemove = (e) => this.elementDrag(e, marker, dragoffset)
       document.onmouseup = this.closeDragElement
     },
 
-    elementDrag(e, marker) {
-      let dot = this.$refs[`dot${marker.no}`][0]
+    elementDrag(e, marker, dragoffset) {
+      // Limit draggable area
+      const { offsetX, offsetY } = this.limitDraggable(e, marker, dragoffset)
 
       marker.pos = {
-        x: dot.offsetLeft + e.movementX,
-        y: dot.offsetTop + e.movementY,
+        x: offsetX,
+        y: offsetY,
+        // x: dot.offsetLeft + e.movementX,
+        // y: dot.offsetTop + e.movementY,
       }
 
       //
-      this.addMarker(marker)
+      this.addCommentMarker(marker)
     },
-    addMarker(marker) {
+
+    addCommentMarker(marker) {
       const index = marker.no
       const textBox = this.$refs[`textBox${index}`]
       let dot = this.$refs[`dot${index}`]
@@ -288,9 +308,9 @@ export default {
     },
     mountTo($leftBox, $textBox, $dot, onDrag, marker) {
       if (!marker.pos) {
-        const dragBox = $(this.$refs['dragBox'])
+        const dragArea = $(this.$refs['dragArea'])
         marker.pos = {
-          x: $textBox.parent()[0] == $leftBox[0] ? 0 : dragBox.width() - 20,
+          x: $textBox.parent()[0] == $leftBox[0] ? 0 : dragArea.width() - 20,
           y:
             $textBox.offset().top -
             $textBox.parent().offset().top +
@@ -303,6 +323,44 @@ export default {
 
       onDrag()
       onDrag()
+    },
+    limitDraggable(e, marker, dragoffset) {
+      let dot = this.$refs[`dot${marker.no}`][0]
+      // limit draggable area
+      const parent = this.$refs['dragArea']
+      let pageX =
+        e.pageX ||
+        e.clientX +
+          (document.documentElement.scrollLeft
+            ? document.documentElement.scrollLeft
+            : parent.scrollLeft)
+      let pageY =
+        e.pageY ||
+        e.clientY +
+          (document.documentElement.scrollTop
+            ? document.documentElement.scrollTop
+            : parent.scrollTop)
+      // left/right constraint
+      let offsetX = 0,
+        offsetY = 0
+      if (pageX - dragoffset.x < 0) {
+        offsetX = 0
+      } else if (pageX - dragoffset.x + dot.clientWidth > parent.clientWidth) {
+        offsetX = parent.clientWidth - dot.clientWidth
+      } else {
+        offsetX = pageX - dragoffset.x
+      }
+
+      // top/bottom constraint
+      if (pageY - dragoffset.y < 0) {
+        offsetY = 0
+      } else if (pageY - dragoffset.y + dot.clientWidth > parent.clientHeight) {
+        offsetY = parent.clientHeight - dot.clientWidth
+      } else {
+        offsetY = e.pageY - dragoffset.y
+      }
+
+      return { offsetX, offsetY }
     },
     closeDragElement() {
       document.onmouseup = null
@@ -419,8 +477,8 @@ export default {
 }
 
 .image-marker__dot {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   cursor: move;
   border-radius: 50%;
   position: absolute;
